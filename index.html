@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ЕГЭ Русский язык</title>
+    <link href="asset/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="asset/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="asset/npm/chart.js"></script>
+    <script src="asset/js/telegram-web-app.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .task-card {
+            transition: transform 0.2s ease-in-out;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .correct-answer {
+            background-color: #10b981;
+            color: white;
+        }
+        .wrong-answer {
+            background-color: #ef4444;
+            color: white;
+        }
+        .review-due {
+            border-left: 4px solid #f59e0b;
+            background-color: #fef3c7;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Main Container -->
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="gradient-bg text-white p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-graduation-cap text-2xl"></i>
+                    <div>
+                        <h1 class="text-xl font-bold">ЕГЭ Русский язык</h1>
+                        <p class="text-sm opacity-90" id="user-name">Добро пожаловать!</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="text-center">
+                        <div class="text-lg font-bold" id="user-score">0</div>
+                        <div class="text-xs">баллов</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="bg-white border-b border-gray-200">
+            <div class="flex overflow-x-auto">
+                <button class="nav-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-blue-600 border-b-2 border-blue-600" data-tab="home">
+                    <i class="fas fa-home mr-2"></i>Главная
+                </button>
+                <button class="nav-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="tasks">
+                    <i class="fas fa-tasks mr-2"></i>Задания
+                </button>
+                <button class="nav-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="reviews">
+                    <i class="fas fa-clock mr-2"></i>Повторения
+                </button>
+                <button class="nav-tab flex-shrink-0 px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="stats">
+                    <i class="fas fa-chart-line mr-2"></i>Статистика
+                </button>
+            </div>
+        </nav>
+
+        <!-- Content Sections -->
+        <main class="p-4 pb-20">
+            <!-- Home Section -->
+            <div id="home-section" class="tab-content">
+                <!-- Progress Overview -->
+                <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+                    <h2 class="text-lg font-semibold mb-4">Ваш прогресс</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <div class="relative w-20 h-20 mx-auto mb-2">
+                                <svg class="w-20 h-20">
+                                    <circle cx="40" cy="40" r="35" stroke="#e5e7eb" stroke-width="6" fill="none"/>
+                                    <circle cx="40" cy="40" r="35" stroke="#3b82f6" stroke-width="6" fill="none" 
+                                            class="progress-ring" stroke-dasharray="220" stroke-dashoffset="132" id="overall-progress"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span class="text-xl font-bold text-blue-600" id="overall-percentage">40%</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600">Общий прогресс</p>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span>Выполнено заданий:</span>
+                                <span class="font-medium" id="completed-tasks">24/60</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>Точность:</span>
+                                <span class="font-medium text-green-600" id="accuracy">85%</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span>Дней подряд:</span>
+                                <span class="font-medium text-orange-600" id="streak">7</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="space-y-4">
+                    <h2 class="text-lg font-semibold">Разделы подготовки</h2>
+                    <div class="grid gap-4">
+                        <div class="category-card bg-white rounded-lg card-shadow p-4" data-category="spelling">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-spell-check text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold">Орфография</h3>
+                                        <p class="text-sm text-gray-600">Задания 9-15</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-medium">12/20</div>
+                                    <div class="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-card bg-white rounded-lg card-shadow p-4" data-category="punctuation">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-quote-right text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold">Пунктуация</h3>
+                                        <p class="text-sm text-gray-600">Задания 16-21</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-medium">8/15</div>
+                                    <div class="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="bg-green-600 h-2 rounded-full" style="width: 53%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-card bg-white rounded-lg card-shadow p-4" data-category="norms">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-language text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold">Языковые нормы</h3>
+                                        <p class="text-sm text-gray-600">Задания 4-8</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-medium">4/10</div>
+                                    <div class="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="bg-purple-600 h-2 rounded-full" style="width: 40%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-card bg-white rounded-lg card-shadow p-4" data-category="text">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-text text-yellow-600"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold">Работа с текстом</h3>
+                                        <p class="text-sm text-gray-600">Задания 1-3, 22-26</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-sm font-medium">0/15</div>
+                                    <div class="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                                        <div class="bg-yellow-600 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks Section -->
+            <div id="tasks-section" class="tab-content hidden">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold">Задания</h2>
+                        <select id="category-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                            <option value="">Все разделы</option>
+                            <option value="spelling">Орфография</option>
+                            <option value="punctuation">Пунктуация</option>
+                            <option value="norms">Языковые нормы</option>
+                            <option value="text">Работа с текстом</option>
+                        </select>
+                    </div>
+
+                    <!-- Task List -->
+                    <div id="task-list" class="space-y-4">
+                        <!-- Tasks will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Section -->
+            <div id="reviews-section" class="tab-content hidden">
+                <div class="space-y-4">
+                    <h2 class="text-lg font-semibold">Повторения по кривой Эббингауза</h2>
+                    
+                    <!-- Review Stats -->
+                    <div class="bg-white rounded-lg card-shadow p-4">
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-orange-600" id="due-today">5</div>
+                                <div class="text-sm text-gray-600">На сегодня</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-blue-600" id="this-week">23</div>
+                                <div class="text-sm text-gray-600">На неделе</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-green-600" id="completed-reviews">127</div>
+                                <div class="text-sm text-gray-600">Выполнено</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Review Queue -->
+                    <div id="review-queue" class="space-y-3">
+                        <!-- Review items will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div id="stats-section" class="tab-content hidden">
+                <div class="space-y-6">
+                    <h2 class="text-lg font-semibold">Статистика</h2>
+
+                    <!-- Progress Chart -->
+                    <div class="bg-white rounded-lg card-shadow p-4">
+                        <h3 class="font-semibold mb-4">Прогресс по дням</h3>
+                        <canvas id="progress-chart" style="height: 300px;"></canvas>
+                    </div>
+
+                    <!-- Category Performance -->
+                    <div class="bg-white rounded-lg card-shadow p-4">
+                        <h3 class="font-semibold mb-4">Результаты по разделам</h3>
+                        <canvas id="category-chart" style="height: 300px;"></canvas>
+                    </div>
+
+                    <!-- Detailed Stats -->
+                    <div class="bg-white rounded-lg card-shadow p-4">
+                        <h3 class="font-semibold mb-4">Подробная статистика</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Всего заданий выполнено:</span>
+                                <span class="font-medium">127</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Правильных ответов:</span>
+                                <span class="font-medium text-green-600">108 (85%)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Время на задание (среднее):</span>
+                                <span class="font-medium">2:34</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Лучшая серия:</span>
+                                <span class="font-medium text-orange-600">12 дней</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Task Modal -->
+        <div id="task-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-lg w-full max-w-lg max-h-screen overflow-y-auto">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold" id="task-title">Задание</h3>
+                            <button id="close-task-modal" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div id="task-content">
+                            <!-- Task content will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // App State
+        let currentUser = {
+            id: null,
+            name: 'Пользователь',
+            score: 0,
+            completedTasks: 24,
+            totalTasks: 60,
+            accuracy: 85,
+            streak: 7
+        };
+
+        let currentTab = 'home';
+        let tasks = [];
+        let reviews = [];
+
+        // Sample Tasks Data
+        const sampleTasks = [
+            {
+                id: 1,
+                category: 'spelling',
+                type: 'multiple',
+                question: 'В каком слове пропущена безударная проверяемая гласная корня?',
+                options: ['разв..вать (флаги)', 'выр..стать', 'пром..кашка', 'ув..дать (цветы)'],
+                correct: 3,
+                explanation: 'В слове "увядать" пропущена безударная проверяемая гласная "я". Можно проверить словом "вянуть".',
+                completed: false,
+                difficulty: 'medium'
+            },
+            {
+                id: 2,
+                category: 'punctuation',
+                type: 'multiple',
+                question: 'В каком предложении нужна запятая?',
+                options: ['Солнце село и стало темно.', 'Он читал книгу сидя в кресле.', 'Мы пошли в театр несмотря на дождь.', 'Книга лежавшая на столе привлекла внимание.'],
+                correct: 3,
+                explanation: 'В предложении "Книга лежавшая на столе привлекла внимание" нужны запятые для выделения причастного оборота.',
+                completed: true,
+                difficulty: 'hard'
+            },
+            {
+                id: 3,
+                category: 'norms',
+                type: 'multiple',
+                question: 'В каком слове ударение падает на первый слог?',
+                options: ['звонИт', 'тОрты', 'докумЕнт', 'алфавИт'],
+                correct: 1,
+                explanation: 'Правильно: тОрты. Ударение падает на первый слог.',
+                completed: false,
+                difficulty: 'easy'
+            },
+            {
+                id: 4,
+                category: 'text',
+                type: 'text',
+                question: 'Определите тему данного текста: "Природа – это не только красивые пейзажи, но и сложная экосистема, где каждый элемент играет важную роль..."',
+                answer: 'Роль природы как экосистемы',
+                explanation: 'Текст посвящен рассмотрению природы как сложной экосистемы.',
+                completed: false,
+                difficulty: 'medium'
+            },
+            {
+                id: 5,
+                category: 'spelling',
+                type: 'multiple',
+                question: 'В каком слове пишется НН?',
+                options: ['кова..ый', 'жаре..ый', 'плете..ый', 'краше..ый'],
+                correct: 0,
+                explanation: 'В слове "кованый" пишется НН, так как это причастие от глагола "ковать".',
+                completed: false,
+                difficulty: 'hard'
+            }
+        ];
+
+        // Sample Reviews Data
+        const sampleReviews = [
+            { id: 1, taskId: 1, nextReview: new Date(), stage: 1, title: 'Безударные гласные' },
+            { id: 2, taskId: 3, nextReview: new Date(Date.now() + 86400000), stage: 2, title: 'Ударения в словах' },
+            { id: 3, taskId: 5, nextReview: new Date(Date.now() + 2*86400000), stage: 3, title: 'Правописание НН' }
+        ];
+
+        // Initialize Telegram WebApp
+        function initTelegram() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                const tg = window.Telegram.WebApp;
+                tg.ready();
+                tg.expand();
+                
+                // Get user info
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    currentUser.name = tg.initDataUnsafe.user.first_name;
+                    currentUser.id = tg.initDataUnsafe.user.id;
+                }
+                
+                // Set theme
+                document.body.style.backgroundColor = tg.backgroundColor || '#f9fafb';
+            }
+        }
+
+        // Initialize App
+        function initApp() {
+            initTelegram();
+            updateUserInfo();
+            loadTasks();
+            loadReviews();
+            initCharts();
+            bindEvents();
+        }
+
+        // Update User Info
+        function updateUserInfo() {
+            document.getElementById('user-name').textContent = currentUser.name;
+            document.getElementById('user-score').textContent = currentUser.score;
+            document.getElementById('completed-tasks').textContent = `${currentUser.completedTasks}/${currentUser.totalTasks}`;
+            document.getElementById('accuracy').textContent = `${currentUser.accuracy}%`;
+            document.getElementById('streak').textContent = currentUser.streak;
+            
+            // Update progress ring
+            const percentage = Math.round((currentUser.completedTasks / currentUser.totalTasks) * 100);
+            const circumference = 2 * Math.PI * 35;
+            const offset = circumference - (percentage / 100) * circumference;
+            document.getElementById('overall-progress').style.strokeDashoffset = offset;
+            document.getElementById('overall-percentage').textContent = `${percentage}%`;
+        }
+
+        // Load Tasks
+        function loadTasks() {
+            tasks = sampleTasks;
+            renderTasks();
+        }
+
+        // Render Tasks
+        function renderTasks() {
+            const taskList = document.getElementById('task-list');
+            const categoryFilter = document.getElementById('category-filter').value;
+            
+            const filteredTasks = categoryFilter 
+                ? tasks.filter(task => task.category === categoryFilter)
+                : tasks;
+
+            taskList.innerHTML = filteredTasks.map(task => `
+                <div class="task-card bg-white rounded-lg card-shadow p-4 cursor-pointer" data-task-id="${task.id}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <span class="px-2 py-1 text-xs rounded-full ${getCategoryColor(task.category)}">
+                                    ${getCategoryName(task.category)}
+                                </span>
+                                <span class="px-2 py-1 text-xs rounded-full ${getDifficultyColor(task.difficulty)}">
+                                    ${getDifficultyName(task.difficulty)}
+                                </span>
+                                ${task.completed ? '<i class="fas fa-check text-green-600"></i>' : ''}
+                            </div>
+                            <h3 class="font-medium mb-1">${task.question.substring(0, 60)}...</h3>
+                            <p class="text-sm text-gray-600">${task.type === 'multiple' ? 'Выберите правильный ответ' : 'Введите ответ'}</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load Reviews
+        function loadReviews() {
+            reviews = sampleReviews;
+            renderReviews();
+        }
+
+        // Render Reviews
+        function renderReviews() {
+            const reviewQueue = document.getElementById('review-queue');
+            const now = new Date();
+            
+            const dueReviews = reviews.filter(review => review.nextReview <= now);
+            const upcomingReviews = reviews.filter(review => review.nextReview > now);
+
+            document.getElementById('due-today').textContent = dueReviews.length;
+
+            const allReviews = [...dueReviews, ...upcomingReviews.slice(0, 5)];
+
+            reviewQueue.innerHTML = allReviews.map(review => {
+                const isDue = review.nextReview <= now;
+                return `
+                    <div class="bg-white rounded-lg card-shadow p-4 ${isDue ? 'review-due' : ''}">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-medium">${review.title}</h3>
+                                <p class="text-sm text-gray-600">
+                                    ${isDue ? 'Готово к повторению' : `Через ${formatTimeUntil(review.nextReview)}`}
+                                </p>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span class="text-xs text-gray-500">Этап ${review.stage}</span>
+                                    <div class="flex space-x-1">
+                                        ${Array.from({length: 5}, (_, i) => `
+                                            <div class="w-2 h-2 rounded-full ${i < review.stage ? 'bg-blue-600' : 'bg-gray-300'}"></div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                            ${isDue ? '<button class="px-3 py-1 bg-orange-600 text-white rounded text-sm">Повторить</button>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            // Progress Chart
+            const progressCtx = document.getElementById('progress-chart').getContext('2d');
+            new Chart(progressCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+                    datasets: [{
+                        label: 'Задания выполнено',
+                        data: [3, 5, 2, 8, 6, 4, 7],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Category Chart
+            const categoryCtx = document.getElementById('category-chart').getContext('2d');
+            new Chart(categoryCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Орфография', 'Пунктуация', 'Языковые нормы', 'Работа с текстом'],
+                    datasets: [{
+                        label: 'Процент правильных ответов',
+                        data: [85, 78, 92, 65],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                        pointBackgroundColor: '#8b5cf6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Bind Events
+        function bindEvents() {
+            // Tab navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    switchTab(e.target.dataset.tab);
+                });
+            });
+
+            // Category cards
+            document.querySelectorAll('.category-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    const category = e.currentTarget.dataset.category;
+                    switchTab('tasks');
+                    document.getElementById('category-filter').value = category;
+                    renderTasks();
+                });
+            });
+
+            // Task cards
+            document.addEventListener('click', (e) => {
+                const taskCard = e.target.closest('.task-card');
+                if (taskCard) {
+                    const taskId = parseInt(taskCard.dataset.taskId);
+                    openTaskModal(taskId);
+                }
+            });
+
+            // Filter change
+            document.getElementById('category-filter').addEventListener('change', renderTasks);
+
+            // Modal events
+            document.getElementById('close-task-modal').addEventListener('click', closeTaskModal);
+            document.getElementById('task-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'task-modal') closeTaskModal();
+            });
+        }
+
+        // Switch Tab
+        function switchTab(tabName) {
+            // Update navigation
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('text-blue-600', 'border-blue-600');
+                tab.classList.add('text-gray-500');
+            });
+            
+            const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+            if (activeTab) {
+                activeTab.classList.remove('text-gray-500');
+                activeTab.classList.add('text-blue-600', 'border-blue-600');
+            }
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            const activeContent = document.getElementById(`${tabName}-section`);
+            if (activeContent) {
+                activeContent.classList.remove('hidden');
+            }
+
+            currentTab = tabName;
+        }
+
+        // Open Task Modal
+        function openTaskModal(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            document.getElementById('task-title').textContent = `Задание ${taskId}`;
+            
+            let content = `
+                <div class="mb-4">
+                    <p class="text-gray-800 mb-4">${task.question}</p>
+            `;
+
+            if (task.type === 'multiple') {
+                content += `<div class="space-y-2">`;
+                task.options.forEach((option, index) => {
+                    content += `
+                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="radio" name="answer" value="${index}" class="mr-3">
+                            <span>${option}</span>
+                        </label>
+                    `;
+                });
+                content += `</div>`;
+            } else {
+                content += `
+                    <textarea class="w-full p-3 border border-gray-300 rounded-lg" rows="4" 
+                              placeholder="Введите ваш ответ..."></textarea>
+                `;
+            }
+
+            content += `
+                </div>
+                <div class="flex space-x-3">
+                    <button id="submit-answer" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">
+                        Ответить
+                    </button>
+                    <button id="skip-task" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        Пропустить
+                    </button>
+                </div>
+                <div id="task-result" class="mt-4 hidden"></div>
+            `;
+
+            document.getElementById('task-content').innerHTML = content;
+            document.getElementById('task-modal').classList.remove('hidden');
+
+            // Bind answer submission
+            document.getElementById('submit-answer').addEventListener('click', () => {
+                submitAnswer(task);
+            });
+
+            document.getElementById('skip-task').addEventListener('click', closeTaskModal);
+        }
+
+        // Submit Answer
+        function submitAnswer(task) {
+            let userAnswer;
+            let isCorrect;
+
+            if (task.type === 'multiple') {
+                const selectedRadio = document.querySelector('input[name="answer"]:checked');
+                if (!selectedRadio) {
+                    alert('Пожалуйста, выберите ответ');
+                    return;
+                }
+                userAnswer = parseInt(selectedRadio.value);
+                isCorrect = userAnswer === task.correct;
+            } else {
+                userAnswer = document.querySelector('textarea').value.trim();
+                isCorrect = userAnswer.toLowerCase().includes(task.answer.toLowerCase());
+            }
+
+            // Show result
+            const resultDiv = document.getElementById('task-result');
+            resultDiv.innerHTML = `
+                <div class="p-4 rounded-lg ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    <div class="flex items-center mb-2">
+                        <i class="fas ${isCorrect ? 'fa-check-circle' : 'fa-times-circle'} mr-2"></i>
+                        <span class="font-semibold">${isCorrect ? 'Правильно!' : 'Неправильно'}</span>
+                    </div>
+                    <p class="text-sm">${task.explanation}</p>
+                    <button class="mt-3 px-4 py-2 bg-white rounded-lg text-sm hover:bg-opacity-90" onclick="closeTaskModal()">
+                        Продолжить
+                    </button>
+                </div>
+            `;
+            resultDiv.classList.remove('hidden');
+
+            // Update task status
+            task.completed = true;
+            
+            // Update user progress
+            if (isCorrect) {
+                currentUser.score += 10;
+            }
+            
+            // Schedule for review (Ebbinghaus curve)
+            scheduleReview(task.id);
+            
+            // Update UI
+            updateUserInfo();
+        }
+
+        // Schedule Review
+        function scheduleReview(taskId) {
+            const intervals = [1, 3, 7, 14, 30]; // days
+            const nextReview = new Date();
+            nextReview.setDate(nextReview.getDate() + intervals[0]);
+            
+            reviews.push({
+                id: reviews.length + 1,
+                taskId: taskId,
+                nextReview: nextReview,
+                stage: 1,
+                title: `Задание ${taskId}`
+            });
+        }
+
+        // Close Task Modal
+        function closeTaskModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+            renderTasks();
+        }
+
+        // Utility Functions
+        function getCategoryColor(category) {
+            const colors = {
+                spelling: 'bg-blue-100 text-blue-800',
+                punctuation: 'bg-green-100 text-green-800',
+                norms: 'bg-purple-100 text-purple-800',
+                text: 'bg-yellow-100 text-yellow-800'
+            };
+            return colors[category] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                spelling: 'Орфография',
+                punctuation: 'Пунктуация',
+                norms: 'Языковые нормы',
+                text: 'Работа с текстом'
+            };
+            return names[category] || 'Другое';
+        }
+
+        function getDifficultyColor(difficulty) {
+            const colors = {
+                easy: 'bg-green-100 text-green-800',
+                medium: 'bg-yellow-100 text-yellow-800',
+                hard: 'bg-red-100 text-red-800'
+            };
+            return colors[difficulty] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getDifficultyName(difficulty) {
+            const names = {
+                easy: 'Легко',
+                medium: 'Средне',
+                hard: 'Сложно'
+            };
+            return names[difficulty] || 'Средне';
+        }
+
+        function formatTimeUntil(date) {
+            const now = new Date();
+            const diff = date.getTime() - now.getTime();
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 1) return '1 день';
+            if (days < 5) return `${days} дня`;
+            return `${days} дней`;
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
+    <script id="html_badge_script1">
+        window.__genspark_remove_badge_link = "https://www.genspark.ai/api/html_badge/" +
+            "remove_badge?token=To%2FBnjzloZ3UfQdcSaYfDlA6nmbkF2Xo2xjnS5OThUBZK8gEi1zpVF%2BdFkkYfzoTj%2B29WCHsgzqF7YVW80JLu0q9ODE4M3jnwDz4pdCrLooI4ZMoLDX%2F6i%2Fcmza0Q6xyvYHJQ%2BRIOEczeTcJKVmDX3tcbVHFzWS3QJiESWvQ%2Fiww%2Bo%2BOrW9C7dLCNazLK46qqpx0t%2FhkFPzJn3kSA1NK4Tjd%2FNLmp3ASZiuKzk%2FJT1CXxiIHlmQw%2BKkcf40HugFv327BMXsIAs%2FHSlSus3WqsM0UEWgBlL5WqN2VRknTv8zUl54ixfDGJbmYrri2e1LMvyMEkWNh4Ps0kKUUs%2FKLz6BAsCWd2c0uGoEDuTMVCJG1VJ74yU9zpi4ODXiVbPT3V7EjawtSYq98MjtlzsQrR43eelx37j1vO%2B0%2FqdZnZ6NLef6Az9NRNrxT2fLVCotbuFQLkJ7TmI5ognMB0vChfmbtm68pqZ4bh9CPEhF9YNEogv3MBwwiEwAG7gWl6nP91QsNhZkhza0KWFEHsYeki9pOUbXa8OSMswR53SL0vik%3D";
+        window.__genspark_locale = "en-US";
+        window.__genspark_token = "To/BnjzloZ3UfQdcSaYfDlA6nmbkF2Xo2xjnS5OThUBZK8gEi1zpVF+dFkkYfzoTj+29WCHsgzqF7YVW80JLu0q9ODE4M3jnwDz4pdCrLooI4ZMoLDX/6i/cmza0Q6xyvYHJQ+RIOEczeTcJKVmDX3tcbVHFzWS3QJiESWvQ/iww+o+OrW9C7dLCNazLK46qqpx0t/hkFPzJn3kSA1NK4Tjd/NLmp3ASZiuKzk/JT1CXxiIHlmQw+Kkcf40HugFv327BMXsIAs/HSlSus3WqsM0UEWgBlL5WqN2VRknTv8zUl54ixfDGJbmYrri2e1LMvyMEkWNh4Ps0kKUUs/KLz6BAsCWd2c0uGoEDuTMVCJG1VJ74yU9zpi4ODXiVbPT3V7EjawtSYq98MjtlzsQrR43eelx37j1vO+0/qdZnZ6NLef6Az9NRNrxT2fLVCotbuFQLkJ7TmI5ognMB0vChfmbtm68pqZ4bh9CPEhF9YNEogv3MBwwiEwAG7gWl6nP91QsNhZkhza0KWFEHsYeki9pOUbXa8OSMswR53SL0vik=";
+    </script>
+    
+        <script id="html_badge_script2" src="asset/html_badge.js"></script>
+        
+    <script id="html_notice_dialog_script" src="asset/notice_dialog.js"></script>
+    
